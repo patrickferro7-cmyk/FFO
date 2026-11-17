@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Market {
+  US
+  AUS
+}
+
+enum TransactionKind {
+  OPEN_MARKET_PURCHASE
+  OTHER_PURCHASE
+  OPTION_EXERCISE
+  GRANT
+  AWARD
+  SALE
+  UNKNOWN
+}
+
+model Transaction {
+  id              String           @id @default(cuid())
+  source          String
+  sourceId        String           @unique
+  market          Market
+  ticker          String
+  companyName     String
+  insiderName     String
+  insiderRole     String?
+  isFounder       Boolean          @default(false)
+  transactionDate DateTime?
+  disclosedAt     DateTime?
+  shares          Decimal?         @db.Decimal(24, 6)
+  price           Decimal?         @db.Decimal(24, 8)
+  value           Decimal?         @db.Decimal(24, 2)
+  currency        String
+  kind            TransactionKind  @default(UNKNOWN)
+  description     String?
+  sourceUrl       String
+  createdAt       DateTime         @default(now())
+
+  @@index([ticker, transactionDate])
+  @@index([insiderName, transactionDate])
+  @@index([market, disclosedAt])
+}
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  ticker    String
+  market    Market
+  createdAt DateTime @default(now())
+
+  @@unique([ticker, market])
+}
+
+model IngestionRun {
+  id         String   @id @default(cuid())
+  source     String
+  startedAt  DateTime @default(now())
+  finishedAt DateTime?
+  status     String
+  records    Int      @default(0)
+  error      String?
+}
